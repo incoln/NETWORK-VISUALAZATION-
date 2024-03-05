@@ -1,0 +1,159 @@
+---
+title: "Network Visualization"
+author: "Chinkled"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: lumen
+    toc: true
+    number_sections: true
+    highlight: github
+---
+
+<style> body {text-align: justify} </style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(igraph)
+library(visNetwork)
+library(knitr)
+library(readxl)
+library(dplyr)
+```
+
+# Read Data
+
+- The data must be without any column name, as you sent me. 
+- The code will automatically give name to each column (`V1`, `V2`, `V3`, and `V4`)
+
+```{r}
+f <- read.csv("data.csv",header = F)
+kable(head(f),caption = "First six rows of original data")
+```
+
+## Getting the Node Attributes
+
+In this step, we will get the attributes for nodes. In our case we have two columns 
+
+- Column `V2`, represents the nodes in column `V1`
+- Column `V4`, represents the nodes in column `V3`
+
+```{r}
+# Getting node attributes
+source <- f[!duplicated(f$V1),][1:2]
+target <- f[!duplicated(f$V3),][3:4]
+names(source) <- names(target) <- c("node","typ")
+df <- rbind(source,target)
+df <- df[!duplicated(df$node),]
+
+kable(head(df),caption = "Nodes attributes : First six rows")
+```
+
+## Getting Edge list
+
+Now, the next step is get the edge list from the data set. We need two columns at least. 
+
+- Source column, which will be `V1.`
+- Target column, which will be `V3.`
+
+
+```{r}
+# Getting edge list
+df1 <- f[,c(1,3)]
+names(df1) <- c("Source","Target")
+
+kable(head(df1),caption = "Edge list : First six rows")
+```
+
+
+# Network Construction
+
+This step contains the process of network construction. We will use the edge list for the creation of network. Further, we will set the attributes to the nodes. Summary of the network is presents here. 
+
+```{r}
+g <- graph.data.frame(df1,directed = T)
+#g <- simplify(g,remove.multiple = T)
+V(g)$cat <- df$typ
+
+g
+```
+
+
+
+# Network Plot
+
+Final and the last step, using the library `visNetwork`, here we will plot the interactive network. 
+
+```{r}
+nodes <- data.frame(id = V(g)$name,
+                    title = V(g)$name,
+                    shape = "icon",
+                    group = V(g)$cat)
+nodes$size <- 25
+edges <- get.data.frame(g,what = "edge")[1:2]
+
+
+
+net <-  visNetwork(nodes, edges, width = "100%",height = 900) %>%
+    visIgraphLayout(layout = "layout.fruchterman.reingold") %>%
+  visGroups(groupname = "PN", shape = "icon", 
+            icon = list(face = "'Font Awesome 5 Free'", code = "f007", size = 75)) %>%
+  visGroups(groupname = "LC", shape = "icon", 
+            icon = list(face = "'Font Awesome 5 Free'", code = "f015", color = "red")) %>%
+  visGroups(groupname = "OG", shape = "icon", 
+            icon = list(face = "'Font Awesome 5 Free'", code = "f0e8", color = "brown")) %>%
+  visGroups(groupname = "PP", shape = "icon", 
+            icon = list(face = "'Font Awesome 5 Free'", code = "f500", color = "orange")) %>%
+  visGroups(groupname = "DC", shape = "icon", 
+            icon = list(face = "'Font Awesome 5 Free'", code = "f1c1", color = "green")) %>%
+  visGroups(groupname = "EV", shape = "icon", 
+            icon = list(face = "'Font Awesome 5 Free'", code = "f73c", color = "purple")) %>%
+  visGroups(groupname = "TE", shape = "icon", 
+            icon = list(face = "'Font Awesome 5 Free'", code = "f87b", color = "skyblue")) %>%
+    visLegend(main = "Group")%>%
+  addFontAwesome(version = "5.13.0")
+net
+visSave(net,"Network_Visualization.html")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
